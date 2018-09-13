@@ -4,7 +4,6 @@ import { JSONExt } from '@phosphor/coreutils';
 import { Widget } from '@phosphor/widgets';
 
 // import { XkcdWidget } from './widgets/XkcdWidget';
-// import { HelloWorldWidget } from './widgets/HelloWorldWidget';
 import { NetworkCanvasWidget } from './widgets/NetworkCanvas';
 
 export function activate(app: JupyterLab, palette: ICommandPalette, restorer: ILayoutRestorer) {
