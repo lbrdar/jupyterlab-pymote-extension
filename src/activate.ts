@@ -3,8 +3,8 @@ import { ICommandPalette, InstanceTracker } from '@jupyterlab/apputils';
 import { JSONExt } from '@phosphor/coreutils';
 import { Widget } from '@phosphor/widgets';
 
-// import { XkcdWidget } from './XkcdWidget';
-import { HelloWorldWidget } from './HelloWorldWidget';
+// import { XkcdWidget } from './widgets/XkcdWidget';
+import { HelloWorldWidget } from './widgets/HelloWorldWidget';
 
 export function activate(app: JupyterLab, palette: ICommandPalette, restorer: ILayoutRestorer) {
   // Create a single widget

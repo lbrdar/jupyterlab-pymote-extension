@@ -21,7 +21,8 @@ class HelloWorld extends React.PureComponent {
 export class HelloWorldWidget extends Widget {
   constructor() {
     super();
-
+    
+    this.id = 'hello-world';
     this.node.appendChild(document.createElement('div'));
   }
 
