@@ -4,11 +4,12 @@ import { JSONExt } from '@phosphor/coreutils';
 import { Widget } from '@phosphor/widgets';
 
 // import { XkcdWidget } from './widgets/XkcdWidget';
-import { HelloWorldWidget } from './widgets/HelloWorldWidget';
+// import { HelloWorldWidget } from './widgets/HelloWorldWidget';
+import { NetworkCanvasWidget } from './widgets/NetworkCanvas';
 
 export function activate(app: JupyterLab, palette: ICommandPalette, restorer: ILayoutRestorer) {
   // Create a single widget
-  let widget: HelloWorldWidget;
+  let widget: NetworkCanvasWidget;
 
   // Add an application command
   const command: string = 'xkcd:open';
@@ -17,7 +18,7 @@ export function activate(app: JupyterLab, palette: ICommandPalette, restorer: IL
     execute: () => {
       if (!widget) {
         // Create a new widget if one does not exist
-        widget = new HelloWorldWidget();
+        widget = new NetworkCanvasWidget();
         widget.update();
       }
       if (!tracker.has(widget)) {

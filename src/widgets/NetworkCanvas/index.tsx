@@ -8,21 +8,15 @@ import {
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 
-class NetworkCanvas extends React.PureComponent {
-  render() {
-    return (
-      <div>
-        Placeholder
-      </div>
-    );
-  }
-}
+import NetworkCanvas from './NetworkCanvas';
 
 export class NetworkCanvasWidget extends Widget {
   constructor() {
     super();
 
     this.id = 'network-canvas';
+    this.title.label = 'Network Canvas';
+    this.title.closable = true;
     this.node.appendChild(document.createElement('div'));
   }
 
