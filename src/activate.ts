@@ -123,13 +123,19 @@ export function activate(
 
       const editor = widget.editor;
       const path = widget.context.path;
-      const code = editor.getLine(0);
+      const code = editor.model.value.text;
 
       if (code) {
-        const data = networkCanvasWidget.networkCanvas.getData();
-        const network = JSON.stringify({ ...data, algorithm: { label: code } });
+        const data = { ...networkCanvasWidget.networkCanvas.getData(), algorithm: code };
 
-        fetch(`${globalConfig.apiUrl}/results/?network=${network}`, { mode: 'cors' })
+        fetch(`${globalConfig.apiUrl}/results/`, {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8'
+          },
+          method: 'POST',
+          mode: 'cors',
+          body: encodeURIComponent('data') + '=' + JSON.stringify(data)
+        })
           .then(body => body.json())
           .then(res => app.commands.execute(CommandIDs.displayResults, { code: res }));
 
