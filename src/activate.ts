@@ -2,7 +2,7 @@ import { JupyterLab, ILayoutRestorer } from '@jupyterlab/application';
 import { ICommandPalette, InstanceTracker } from '@jupyterlab/apputils';
 import { CodeEditor, IEditorServices } from '@jupyterlab/codeeditor';
 import { IConsoleTracker } from '@jupyterlab/console';
-import { ISettingRegistry } from '@jupyterlab/coreutils';
+import { ISettingRegistry, PathExt } from '@jupyterlab/coreutils';
 import { IFileBrowserFactory } from '@jupyterlab/filebrowser';
 import { FileEditor, FileEditorFactory, IEditorTracker } from '@jupyterlab/fileeditor';
 import { ILauncher } from '@jupyterlab/launcher';
@@ -13,6 +13,9 @@ import { Widget } from '@phosphor/widgets';
 
 import { ID } from './index';
 import { NetworkCanvasWidget } from './widgets/NetworkCanvas';
+import globalConfig from './config';
+import { normalize } from './utils';
+import { newFile, updateFile } from './utils/jupyter';
 
 const NETWORK_CANVAS_ID = 'network-canvas';
 const FACTORY = 'Editor';
@@ -21,6 +24,7 @@ namespace CommandIDs {
   export const createNew = `${ID}:create-new`;
   export const createConsole = `${ID}:create-console`;
   export const runCode = `${ID}:run-code`;
+  export const displayResults = `${ID}:display-results`;
   export const openNetworkCanvas = `${NETWORK_CANVAS_ID}:open-network-canvas`;
 }
 
@@ -49,9 +53,7 @@ export function activate(
   const docTracker = new InstanceTracker<Widget>({ namespace: ID });
   const networkCanvasTracker = new InstanceTracker<Widget>({ namespace: NETWORK_CANVAS_ID });
 
-  const isEnabled = () =>
-    docTracker.currentWidget !== null &&
-    docTracker.currentWidget === app.shell.currentWidget;
+  const isEnabled = () => !!app.shell.currentWidget;
 
   const config = { ...CodeEditor.defaultConfig };
 
@@ -113,7 +115,7 @@ export function activate(
 
   app.commands.addCommand(CommandIDs.runCode, {
     execute: () => {
-      const widget = (docTracker.currentWidget as any).content;
+      const widget = (app.shell.currentWidget as any).content;
 
       if (!widget) {
         return;
@@ -121,10 +123,16 @@ export function activate(
 
       const editor = widget.editor;
       const path = widget.context.path;
-      const selection = editor.getSelection();
-      const code = editor.getLine(selection.start.line);
+      const code = editor.getLine(0);
 
       if (code) {
+        const data = networkCanvasWidget.networkCanvas.getData();
+        const network = JSON.stringify({ ...data, algorithm: { label: code } });
+
+        fetch(`${globalConfig.apiUrl}/results/?network=${network}`, { mode: 'cors' })
+          .then(body => body.json())
+          .then(res => app.commands.execute(CommandIDs.displayResults, { code: res }));
+
         return app.commands.execute('console:inject', { activate: false, code, path });
       } else {
         return Promise.resolve(void 0);
@@ -147,6 +155,7 @@ export function activate(
           content: 'test',
         })
         .then(model => {
+          app.commands.execute(CommandIDs.openNetworkCanvas);
           return app.commands.execute('docmanager:open', {
             path: model.path,
             factory: FACTORY
@@ -169,12 +178,56 @@ export function activate(
       }
       if (!networkCanvasWidget.isAttached) {
         // Attach the widget to the main work area if it's not there
-        app.shell.addToMainArea(networkCanvasWidget);
+        app.shell.addToRightArea(networkCanvasWidget);
       }
       // Refresh the comic in the widget
       networkCanvasWidget.update();
       // Activate the widget
       app.shell.activateById(networkCanvasWidget.id);
+    }
+  });
+
+  app.commands.addCommand(CommandIDs.displayResults, {
+    label: 'Display results',
+    execute: (args: any) => {
+      const cwd = args['cwd'] || browserFactory.defaultBrowser.model.path;
+
+      const globalPath = normalize(cwd);
+      // @ts-ignore
+      const [drive, localPath] = app.serviceManager.contents._driveForPath(globalPath);
+      const options = {
+        content: JSON.stringify(args['code']),
+        ext: 'pymote',
+        format: 'text',
+        name: 'results',
+        path: localPath,
+        type: 'file'
+      };
+
+      return newFile(options)
+        .then((contentsModel: any) => {
+          return updateFile({ ...contentsModel, ...options, path: PathExt.join(globalPath, contentsModel.name) });
+        })
+        .then(async (model: any) => {
+          try {
+            const newPath = `${model.path.substring(0, model.path.lastIndexOf('/'))}/results.pymote`;
+            await app.serviceManager.contents.delete(newPath);
+          } catch (e) {
+            console.log(e);
+          }
+
+          return model;
+        })
+        .then((model: any) => {
+          const newPath = `${model.path.substring(0, model.path.lastIndexOf('/'))}/results.pymote`;
+          return app.serviceManager.contents.rename(model.path, newPath);
+        })
+        .then((model: any) => {
+          app.shell.addToMainArea(model);
+          app.shell.activateById(model.id);
+          app.shell.collapseRight();
+          return app.commands.execute('docmanager:open', { path: model.path });
+        });
     }
   });
 
