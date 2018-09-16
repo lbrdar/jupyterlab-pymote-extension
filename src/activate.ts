@@ -228,11 +228,11 @@ export function activate(
           const newPath = `${model.path.substring(0, model.path.lastIndexOf('/'))}/results.pymote`;
           return app.serviceManager.contents.rename(model.path, newPath);
         })
+        .then((model: any) => app.commands.execute('docmanager:open', { path: model.path }))
         .then((model: any) => {
           app.shell.addToMainArea(model);
           app.shell.activateById(model.id);
           app.shell.collapseRight();
-          return app.commands.execute('docmanager:open', { path: model.path });
         });
     }
   });
