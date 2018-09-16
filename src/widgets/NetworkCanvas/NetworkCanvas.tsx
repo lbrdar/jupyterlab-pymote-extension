@@ -2,6 +2,7 @@ import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import * as React from 'react';
 
 import Network from '../../components/Network';
+import config from '../../config';
 import constants from '../../consts';
 
 interface ISettings {
@@ -53,6 +54,12 @@ export default class NetworkCanvas extends React.Component {
     };*/
   }
 
+  getData = () => {
+    const { edges, nodes, settings } = this.state;
+
+    return { edges, nodes, settings };
+  };
+
   setEdges = (edges: Array<any>) => this.setState({ edges });
   setNodes = (nodes: Array<any>) => this.setState({ nodes }, () => (this.state.settings.useCommRange && this.recalculateEdges()));
   setSettings = (settings: ISettings) => {
@@ -66,7 +73,7 @@ export default class NetworkCanvas extends React.Component {
       params = `${params}&&settings=${JSON.stringify(settings)}`;
     }
 
-    fetch(`http://127.0.0.1:8000/api/create_network/?${params}`, { mode: 'cors' })
+    fetch(`${config.apiUrl}/api/create_network/?${params}`, { mode: 'cors' })
     // fetch(`${config.apiURL}/create_network/?${params}`)
       .then(body => body.json())
       .then(res => this.setState({ edges: res.edges, nodes: res.nodes }));

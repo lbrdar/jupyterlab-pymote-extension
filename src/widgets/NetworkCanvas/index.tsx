@@ -11,6 +11,8 @@ import * as ReactDOM from 'react-dom';
 import NetworkCanvas from './NetworkCanvas';
 
 export class NetworkCanvasWidget extends Widget {
+  public networkCanvas: any;
+
   constructor() {
     super();
 
@@ -18,6 +20,7 @@ export class NetworkCanvasWidget extends Widget {
     this.title.label = 'Network Canvas';
     this.title.closable = true;
     this.node.appendChild(document.createElement('div'));
+    this.networkCanvas = null;
   }
 
   protected onAfterAttach(msg: Message): void {
@@ -26,6 +29,6 @@ export class NetworkCanvasWidget extends Widget {
 
   protected onUpdateRequest(msg: Message): void {
     const host = this.node.firstChild as Element;
-    ReactDOM.render(<NetworkCanvas />, host);
+    ReactDOM.render(<NetworkCanvas ref={ref => this.networkCanvas = ref}/>, host);
   }
 }
